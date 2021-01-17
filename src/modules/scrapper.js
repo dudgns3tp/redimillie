@@ -1,6 +1,6 @@
 const request = require('request');
 const cheerio = require('cheerio');
-
+const puppeteer = require('puppeteer');
 /**
  * baseURL: https://select.ridibooks.com/search?q=%EC%8B%9C%EA%B0%84&type=Books
  * parameter: title(String)
@@ -10,35 +10,45 @@ const cheerio = require('cheerio');
 exports.rediSelect = books => new Promise((resolved, rejected) => {
   const title = books[0].title;
   const url = 'https://select.ridibooks.com/search?q=' + encodeURI(title) +'&type=Books';
-  request.get(url, (err, res, body) => {
-    const $ = cheerio.load(body)
-    console.log(body)
-    const $bookList = $('.SearchResultBookList')
-    $bookList.each(item => {
-      let titleElement = $(this).find('.SearchResultBookList_Title').text();
-      console.log(item)
-      console.log(titleElement)
+  (async () => {
+    const browse = await puppeteer.launch();
+    const page = await browse.newPage();
+    await page.goto(url);
+
+    const content = await page.content()
+    const $ = cheerio.load(content);
+    const lists = $("#app > main > ul> li")
+    lists.each((index, list) => {
+      const titleName = $(list).find("div > div > a > h3 > strong").text();
+      const authorName = $(list).find("div > div > a > span.SearchResultBookList_Authors").text()
+      const publisherName = $(list).find("div > div > a > span.SearchResultBookList_Publisher").text()
+      console.log({ index, titleName, authorName, publisherName})
     })
-    resolved(true)
-  })
+    browse.close()
+    resolved(lists)
+  })();
 })
 
 exports.milli = books => new Promise((resolved, rejected) => {
   const title = books[0].title;
   const url = 'https://www.millie.co.kr/v3/search/result/'+ encodeURI(title) +'?type=all&order=keyword&category=0';
-  //const url = 'http://bookclub.yes24.com/BookClub/Search?keyword='+encodeURI(title) +'&OrderBy=01&pageNo=2';
-  console.log(url)
-  request.get(url, (err, res, body) => {
-    const $ = cheerio.load(body)
-    console.log(body)
-    const $bookList = $('.SearchResultBookList')
-    $bookList.each(item => {
-      let titleElement = $(this).find('.SearchResultBookList_Title').text();
-      console.log(item)
-      console.log(titleElement)
+  (async () => {
+    const browse = await puppeteer.launch();
+    const page = await browse.newPage();
+    await page.goto(url);
+
+    const content = await page.content()
+    const $ = cheerio.load(content);
+    const lists = $("#wrap > section > div > section:nth-child(4) > div > ul > li");
+
+    lists.each((index, list) => {
+      const titleName = $(list).find("a > div.body > span.title").text();
+      const authorName = $(list).find("a > div.body > div > span").text()
+      console.log({ index, titleName, authorName})
     })
-  })
-  resolved(true)
+    browse.close()
+    resolved(lists)
+  })();
 })
 
 exports.yes24 = books => new Promise((resolved, rejected) => {
