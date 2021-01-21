@@ -54,16 +54,19 @@ exports.milli = async (books) => {
   return data
 }
 
-exports.yes24 = books => new Promise((resolved, rejected) => {
+exports.yes24 = async books => {
+  const platform = 'yes24'
   const title = books.title;
-  const url = 'https://bookclub.yes24.com/BookClub/Search?keyword='+encodeURI(title) +'&OrderBy=01&pageNo=2';
-  console.log(url);
-  request.get(url, (err, res, body) => {
-    const $ = cheerio.load(body)
-    console.log(body)
-  })
-  resolved(true)
-})
+  const url = 'https://bookclub.yes24.com/BookClub/Search?keyword='+encodeURI(title) +'&OrderBy=01&pageNo=1';
+  const selector = "#ulGoodsList > li";
+  const childSelectorArr = [
+    "div > div > div > a",
+    "",
+    "",
+  ]
+  const data = await pupRequest(url, selector, childSelectorArr, platform);
+  return data
+}
 
 exports.kyoBoBook = books => new Promise((resolved, rejected) => {
   const title = books.title;
