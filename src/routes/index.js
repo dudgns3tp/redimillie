@@ -34,15 +34,24 @@ router.get('/apis', async (req, res) => {
 			}
 		})
 		console.log(books[0])
-		const ridi = await scrapper.ridiSelect(books[0]);
 		/*
+		const ridi = await scrapper.ridiSelect(books[0]);
 		const milli = await scrapper.milli(books[0]);
 		const yes24 = await scrapper.yes24(books[0]);
 		const kyoBo = await scrapper.kyoBoBook(books[0])
 		const dto = [...ridi, ...milli, ...yes24, ...kyoBo] 
 			.filter(item => `${books[0].title}`.match(item.titleName));
 		*/
-		res.status(200).send(ridi)
+		
+		const [ridi, milli, yes24, kyoBo] = await Promise.all([
+			scrapper.ridiSelect(books[0]), 
+			scrapper.milli(books[0]), 
+			scrapper.yes24(books[0]),
+			scrapper.kyoBoBook(books[0])
+		]);
+		const dto = [ridi, milli, yes24, kyoBo].filter(item => `${books[0].title}`.match(item.titleName));;
+
+		res.status(200).send(dto)
 	} catch (err) {
 		console.log(err)
 		res.status(500).send(err)
