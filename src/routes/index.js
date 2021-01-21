@@ -31,10 +31,11 @@ router.get('/apis', async (req,res) => {
 			description: JSON.parse(bookDescription)
 		}
 	})
-	const redi = scrapper.rediSelect(refinedBooks);
-	const milli = scrapper.milli(refinedBooks);
+	console.log(refinedBooks[0])
+	const ridi = await scrapper.ridiSelect(refinedBooks[0]);
+	const milli = await scrapper.milli(refinedBooks[0]);
 
-	 res.status(200).send(refinedBooks)
+	 res.status(200).send({ridi, milli})
 	} catch(err) {
 		console.log(err)
 		res.status(500).send({})
