@@ -13,33 +13,39 @@ router.get('/', function (req, res, next) {
 	});
 });
 
-router.get('/apis', async (req,res) => {
-	try{
-	const books = await naverAPI.callBookApi(req.query.query);
-	const refinedBooks = books.map(book => {
-		let bookTitle = JSON.stringify(book.title)
-			.replace(/(<b>)|(<\/b>)/gi,'')
-			.replace(/ *\([^)]*\) */g, "");
-		let bookDescription = JSON.stringify(book.description)
-			.replace(/(<b>)|(<\/b>)/gi,'')
-		return {
-			title: JSON.parse(bookTitle),
-			link: book.link,
-			image: book.image,
-			author: book.author,
-			isbn: book.isbn,
-			description: JSON.parse(bookDescription)
-		}
-	})
-	console.log(refinedBooks[0])
-	const ridi = await scrapper.ridiSelect(refinedBooks[0]);
-	const milli = await scrapper.milli(refinedBooks[0]);
-	const yes24 = await scrapper.yes24(refinedBooks[0]);
-
-	 res.status(200).send({ridi, milli, yes24})
-	} catch(err) {
+router.get('/apis', async (req, res) => {
+	try {
+		const apiBooks = await naverAPI.callBookApi(req.query.query);
+		const books = apiBooks.map(book => {
+			let bookTitle = JSON
+				.stringify(book.title)
+				.replace(/(<b>)|(<\/b>)/gi, '')
+				.replace(/ *\([^)]*\) */g, "");
+			let bookDescription = JSON
+				.stringify(book.description)
+				.replace(/(<b>)|(<\/b>)/gi, '')
+			return {
+				title: JSON.parse(bookTitle),
+				link: book.link,
+				image: book.image,
+				author: book.author,
+				isbn: book.isbn,
+				description: JSON.parse(bookDescription)
+			}
+		})
+		console.log(books[0])
+		const ridi = await scrapper.ridiSelect(books[0]);
+		/*
+		const milli = await scrapper.milli(books[0]);
+		const yes24 = await scrapper.yes24(books[0]);
+		const kyoBo = await scrapper.kyoBoBook(books[0])
+		const dto = [...ridi, ...milli, ...yes24, ...kyoBo] 
+			.filter(item => `${books[0].title}`.match(item.titleName));
+		*/
+		res.status(200).send(ridi)
+	} catch (err) {
 		console.log(err)
-		res.status(500).send({})
+		res.status(500).send(err)
 	}
 })
 
