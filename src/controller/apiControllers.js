@@ -1,4 +1,5 @@
 const naverAPI = require('../modules/naverBookApi');
+const scrapper = require('../modules/scrapper');
 const ut = require('../modules/util');
 const rm = require('../modules/responseMessage');
 
@@ -27,16 +28,37 @@ exports.naverAPI = async (req, res) => {
       };
     });
 
-    // const [ridi, milli, yes24, kyoBo] = await Promise.all([
-    // 	scrapper.ridiSelect(books[0]),
-    // 	scrapper.milli(books[0]),
-    // 	scrapper.yes24(books[0]),
-    // 	scrapper.kyoBoBook(books[0])
-    // ]);
-    // const dto = [ridi, milli, yes24, kyoBo].filter(item => `${books[0].title}`.match(item.titleName));
     res.status(200).json(ut.success(rm.GET_NAVER_BOOK_SUCCESS, books));
   } catch (err) {
     console.log(err);
     res.status(500).json(ut.fail(rm.GET_NAVER_BOOK_FAIL));
+  }
+};
+
+/**
+ * @body = title, link
+ * @return  json array
+ */
+exports.crawling = async (req, res) => {
+  const { title, link } = req.query;
+
+  if (!title) {
+    return res.status(400).json(ut.fail(rm.NULL_VALUE));
+  }
+
+  console.log(title);
+  try {
+    let dto = await Promise.all([
+      scrapper.ridiSelect(title),
+      scrapper.milli(title),
+      scrapper.yes24(title),
+      scrapper.kyoBoBook(title),
+    ]);
+    console.log(dto);
+    dto = dto.filter((item) => `${title}`.match(item.titleName));
+    res.status(200).json(ut.success(rm.GET_CRAWLING_BOOKS_SUCCESS, dto));
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(ut.fail(rm.GET_CRAWLING_BOOKS_FAILED));
   }
 };

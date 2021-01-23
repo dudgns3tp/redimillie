@@ -1,12 +1,6 @@
 const request = require('request');
 const cheerio = require('cheerio');
 const puppeteer = require('puppeteer');
-/**
- * baseURL: https://select.ridibooks.com/search?q=%EC%8B%9C%EA%B0%84&type=Books
- * parameter: title(String)
- * input: Json
- * output: -{title: String, isExisted: boolean}
- */
 
 const pupRequest = async (url, selector, childSelectorArr, platform, title) => {
   const [TITLE, AUTHOR, PUBLISHER, REDIRECT_URL] = [0, 1, 2, 3];
@@ -52,9 +46,8 @@ const pricePupRequest = async (url, selectors) => {
   return prices;
 };
 
-exports.ridiSelect = async (books) => {
+exports.ridiSelect = async (title) => {
   const platform = 'ridiselect';
-  const title = books.title;
   const url =
     'https://select.ridibooks.com/search?q=' + encodeURI(title) + '&type=Books';
   const selector = '#app > main > ul> li';
@@ -85,9 +78,8 @@ exports.ridiSelect = async (books) => {
 };
 
 // 밀리의 서재는 책 구매가 없습니다~.
-exports.milli = async (books) => {
+exports.milli = async (title) => {
   const platform = 'milli';
-  const title = books.title;
   const url =
     'https://www.millie.co.kr/v3/search/result/' +
     encodeURI(title) +
@@ -110,9 +102,8 @@ exports.milli = async (books) => {
   return book;
 };
 
-exports.yes24 = async (books) => {
+exports.yes24 = async (title) => {
   const platform = 'yes24';
-  const title = books.title;
   const url =
     'https://bookclub.yes24.com/BookClub/Search?keyword=' +
     encodeURI(title) +
@@ -144,9 +135,8 @@ exports.yes24 = async (books) => {
   return book;
 };
 
-exports.kyoBoBook = async (books) => {
+exports.kyoBoBook = async (title) => {
   const platform = 'kyoBoSam';
-  const title = books.title;
   const url =
     'https://search.kyobobook.co.kr/web/search?vPstrKeyWord=' +
     encodeURI(title) +

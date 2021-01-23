@@ -13,5 +13,6 @@ router.get('/', function (req, res) {
 });
 
 router.get('/apis', apiControllers.naverAPI);
+router.get('/apis/crawling', apiControllers.crawling);
 
 module.exports = router;
