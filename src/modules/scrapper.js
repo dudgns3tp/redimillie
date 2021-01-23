@@ -9,7 +9,7 @@ const pupRequest = async (url, selector, childSelectorArr, platform, title) => {
   await page.goto(url);
   const content = await page.content();
   const $ = cheerio.load(content);
-  const lists = [];
+  let lists = [];
   $(selector).each((_, list) => {
     const titleName = $(list).find(childSelectorArr[TITLE]).text();
     const authorName = $(list).find(childSelectorArr[AUTHOR]).text();
@@ -26,24 +26,10 @@ const pupRequest = async (url, selector, childSelectorArr, platform, title) => {
     });
   });
   browse.close();
-  lists.filter((item) => title.match(item.titleName));
-  return lists[0];
-};
-
-const pricePupRequest = async (url, selectors) => {
-  const [PRICE, RENT_PRICE] = [0, 1];
-  const browse = await puppeteer.launch();
-  const page = await browse.newPage();
-  await page.goto(url);
-
-  const content = await page.content();
-  const $ = cheerio.load(content);
-  prices = {
-    price: $(selectors[PRICE]).text(),
-    rentPrice: $(selectors[RENT_PRICE]).text(),
-  };
-  browse.close();
-  return prices;
+  if (lists.length) {
+    return lists.filter((item) => title.match(item.titleName))[0];
+  }
+  return;
 };
 
 exports.ridiSelect = async (title) => {
@@ -57,27 +43,10 @@ exports.ridiSelect = async (title) => {
     'div > div > a > span.SearchResultBookList_Publisher',
     'div > div > a',
   ];
-  //책 정보
   let book = await pupRequest(url, selector, childSelectorArr, platform, title);
-  if (book) {
-    book.redirectURL =
-      'https://ridibooks.com' + book.redirectURL.replace('book', 'books');
-
-    // 대여, 구매 가격
-    const priceSelectors = [
-      '#page_detail > div.detail_wrap > div.detail_body_wrap > section > article.detail_header.trackable > div.header_info_wrap > div.info_price_wrap > div > div > table > tbody > tr.selling_price_row > td.book_price > span',
-      '#page_detail > div.detail_wrap > div.detail_body_wrap > section > article.detail_header.trackable > div.header_info_wrap > div.info_price_wrap > div > div > table > tbody > tr.single_rent_row.last_rent_row > td.book_price > span',
-    ];
-    const prices = await pricePupRequest(book.redirectURL, priceSelectors);
-    book = {
-      ...book,
-      ...prices,
-    };
-  }
   return book;
 };
 
-// 밀리의 서재는 책 구매가 없습니다~.
 exports.milli = async (title) => {
   const platform = 'milli';
   const url =
@@ -102,38 +71,40 @@ exports.milli = async (title) => {
   return book;
 };
 
-exports.yes24 = async (title) => {
-  const platform = 'yes24';
-  const url =
-    'https://bookclub.yes24.com/BookClub/Search?keyword=' +
-    encodeURI(title) +
-    '&OrderBy=01&pageNo=1';
-  const selector = '#ulGoodsList > li';
-  const childSelectorArr = [
-    'div > div > div > a',
-    '',
-    '',
-    'div > p > span > a',
-  ];
-  let book = await pupRequest(url, selector, childSelectorArr, platform, title);
-  if (book) {
-    book.redirectURL =
-      'http://www.yes24.com/Product/Goods/' +
-      book.redirectURL.split('goodsNo=')[1];
+exports.yes24 = (title) =>
+  new Promise((resolved, rejected) => {
+    const url =
+      'https://bookclub.yes24.com/BookClub/Search?keyword=' +
+      encodeURI(title) +
+      '&OrderBy=01&pageNo=1';
 
-    // 대여, 구매 가격
-    const priceSelectors = [
-      '#yDetailTopWrap > div.topColRgt > div.gd_infoBot > div.gd_infoTbArea > div:nth-child(3) > table > tbody > tr:nth-child(2) > td > span > em',
-      '',
-    ];
-    const prices = await pricePupRequest(book.redirectURL, priceSelectors);
-    book = {
-      ...book,
-      ...prices,
+    const options = {
+      url,
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      encoding: null,
     };
-  }
-  return book;
-};
+
+    request.get(options, function (error, response, body) {
+      if (error) {
+        rejected(response.statusCode);
+      }
+
+      const $ = cheerio.load(body);
+      const selector = '#ulGoodsList > li';
+      const childSelectorArr = ['div > div > div > a', 'div > p > span > a'];
+      let books = {};
+
+      $(selector).each((_, list) => {
+        const title = $(list).find(childSelectorArr[0]).text();
+        const redirectURL = $(list).find(childSelectorArr[1]).attr('href');
+        books = {
+          title,
+          redirectURL: 'http://bookclub.yes24.com' + redirectURL,
+        };
+      });
+      resolved(books);
+    });
+  });
 
 exports.kyoBoBook = async (title) => {
   const platform = 'kyoBoSam';
@@ -156,3 +127,38 @@ exports.kyoBoBook = async (title) => {
   );
   return book;
 };
+
+//@todo Map 한글플랫폼 -> 영어 플랫폼으로 바꿔주기
+exports.searchNaverBook = (bid) =>
+  new Promise((resolved, rejected) => {
+    const url = 'https://book.naver.com/bookdb/book_detail.nhn?bid=' + bid;
+    const options = {
+      url,
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      encoding: null,
+    };
+
+    request.get(options, function (error, response, body) {
+      if (error) {
+        rejected(response.statusCode);
+      }
+
+      const $ = cheerio.load(body);
+      const selector = '#productListLayer > ul > li';
+      let lists = [];
+
+      $(selector).each((_, list) => {
+        const isEbook = $(list).find('strong').text();
+        const platform = $(list).find('div > a').text();
+        const price = $(list).find('span > em').text();
+        if (isEbook.match('ebook')) {
+          lists.push({
+            platform: platform.split('Naver')[0],
+            price: price.split('원')[0],
+          });
+        }
+      });
+
+      resolved(lists);
+    });
+  });

@@ -5,6 +5,7 @@ const rm = require('../modules/responseMessage');
 
 exports.naverAPI = async (req, res) => {
   const start = req.query.start || 1;
+
   try {
     if (!req.query.query) {
       return res.status(400).json(ut.fail(rm.NULL_VALUE));
@@ -27,7 +28,6 @@ exports.naverAPI = async (req, res) => {
         description: JSON.parse(bookDescription),
       };
     });
-
     res.status(200).json(ut.success(rm.GET_NAVER_BOOK_SUCCESS, books));
   } catch (err) {
     console.log(err);
@@ -42,20 +42,23 @@ exports.naverAPI = async (req, res) => {
 exports.crawling = async (req, res) => {
   const { title, link } = req.query;
 
-  if (!title) {
+  if (!title || !link) {
     return res.status(400).json(ut.fail(rm.NULL_VALUE));
   }
 
-  console.log(title);
   try {
+    const bid = link.split('bid=')[1];
+    const naver = await scrapper.searchNaverBook(bid);
+    console.log(naver);
+
     let dto = await Promise.all([
       scrapper.ridiSelect(title),
       scrapper.milli(title),
       scrapper.yes24(title),
       scrapper.kyoBoBook(title),
     ]);
-    console.log(dto);
-    dto = dto.filter((item) => `${title}`.match(item.titleName));
+
+    dto = dto.filter((item) => item !== undefined);
     res.status(200).json(ut.success(rm.GET_CRAWLING_BOOKS_SUCCESS, dto));
   } catch (err) {
     console.log(err);
