@@ -29,9 +29,9 @@ const pupRequest = async (url, selector, childSelectorArr, platform, title) => {
             redirectURL
         })
     })
-    browse.close()
+    browse.close();
     lists.filter(item => title.match(item.titleName));
-    return lists[0]
+    return lists[0];
 }
 
 const pricePupRequest = async (url, selectors) => {
@@ -42,12 +42,12 @@ const pricePupRequest = async (url, selectors) => {
 
     const content = await page.content()
     const $ = cheerio.load(content);
-    data = {
+    prices = {
         price: $(selectors[PRICE]).text(),
         rentPrice: $(selectors[RENT_PRICE]).text()
     }
     browse.close();
-    return data;
+    return prices;
 }
 
 exports.ridiSelect = async (books) => {
@@ -129,6 +129,6 @@ exports.kyoBoBook = async books => {
         'td.detail > div.author > a:nth-child(1)',
         ''
     ]
-    const data = await pupRequest(url, selector, childSelectorArr, platform, title);
-    return data;
+    const book = await pupRequest(url, selector, childSelectorArr, platform, title);
+    return book;
 }

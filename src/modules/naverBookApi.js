@@ -4,8 +4,8 @@ const dotenv = require('dotenv');
 dotenv.config()
 
 
-exports.callBookApi = query => new Promise((resolved, rejected) => {
-    const api_url = 'https://openapi.naver.com/v1/search/book.json?query=' + encodeURI(query); // json 결과
+exports.callBookApi = (query, start) => new Promise((resolved, rejected) => {
+    const api_url = 'https://openapi.naver.com/v1/search/book.json?query=' + encodeURI(query) +'&start=' + start; // json 결과
     const options = {
         url: api_url,
         headers: {
@@ -15,10 +15,9 @@ exports.callBookApi = query => new Promise((resolved, rejected) => {
     };
     request.get(options, function (error, response, body) {
         if (!error && response.statusCode == 200) {
-            resolved(JSON.parse(body).items)
+            resolved(JSON.parse(body).items);
         } else {
-            rejected(response.statusCode)
-            console.log('error = ' + response.statusCode);
+            rejected(response.statusCode);
         }
     });
 })
