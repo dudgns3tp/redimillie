@@ -10,7 +10,7 @@ exports.callBookApi = (query, start) =>
       'https://openapi.naver.com/v1/search/book.json?query=' +
       encodeURI(query) +
       '&start=' +
-      start; // json 결과
+      start;
     const options = {
       url: api_url,
       headers: {
