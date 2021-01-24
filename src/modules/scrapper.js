@@ -116,7 +116,7 @@ exports.yes24 = (title) =>
                     .find(childSelectorArr[1])
                     .attr('href');
                 books = {
-                    title,
+                    titleName: title,
                     platform,
                     redirectURL: 'http://bookclub.yes24.com' + redirectURL,
                     price: subscribedPrice,
@@ -188,7 +188,6 @@ exports.searchNaverBook = (bid) =>
                     platformName = platform.split('Naver')[0];
                     books.push({
                         platform: platformIdMap.get(platformName),
-                        platformName,
                         price: Number(price.split('원')[0]),
                         redirectURL,
                     });
