@@ -189,7 +189,7 @@ exports.searchNaverBook = (bid) =>
                     books.push({
                         platform: platformIdMap.get(platformName),
                         platformName,
-                        price: price.split('원')[0],
+                        price: Number(price.split('원')[0]),
                         redirectURL,
                     });
                 }
